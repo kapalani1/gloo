@@ -90,13 +90,16 @@ int main(int argc, char **argv)
 
     //generate a openGl object for allocating memory on the GPU etc.
     GLuint VBO, vertexShader, fragmentShader; //store references to objects
-    GLuint VAO;
+    GLuint VAO; //vertex array object
     //don't want to repeat buffer setup code, so store in vertex array object
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
     //bind vertex array object
     glBindVertexArray(VAO);
+
+    //set up attributes for this VAO and which VBO to use for each VAO
+    //VBO is GPU memory that contains data used to draw
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     //populate buffer (does not take VBO) because only one buffer type at a
@@ -113,6 +116,13 @@ int main(int argc, char **argv)
                                        //data
     //enable vertex attribute with position 0
     glEnableVertexAttribArray(0);
+
+    //more attribute/vbo configs here. The first parameter of the vertex
+    //attribute pointer points to the attribute and which vbo to use is given
+    //by which buffer is currently bound
+
+    //unbind vao
+    glBindVertexArray(0);
 
     //compile shader
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
