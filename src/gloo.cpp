@@ -1,6 +1,7 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mode)
@@ -11,18 +12,22 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
 
 const char *vertex_shader_source =
 "#version 330 core\n"
+//location metadata about the position of the attribute
 "layout (location = 0) in vec3 position;\n" //position attribute location is 0
+"out vec4 vertexColor;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
+"   vertexColor = vec4(0.0f, 0.5f, 0.0f, 1.0f);\n"
 "}\n";
 
-const char *fragment_orange_shader_source =
+const char *fragment_shader_source =
 "#version 330 core\n"
 "out vec4 color;\n"
+"uniform vec4 uniform_color;\n" //a uniform variable is global
 "void main()\n"
 "{\n"
-"   color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"   color = uniform_color;\n"
 "}\n";
 
 const char *fragment_yellow_shader_source =
@@ -115,81 +120,67 @@ int main(int argc, char **argv)
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     //vertices for triangle to be rendered
-    GLfloat vertices[][9] = {
-        {
+    GLfloat vertices[] = {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
         0.5f, 0.5f, 0.0f
-        },
-        {
-        0.5f, -0.5f, 0.0f,
-        1.0f, -0.5f, 0.0f,
-        0.75f, 0.5f, 0.0f
-        }
     };
 
-    GLuint indices[][3] = {
-        {0, 1, 2},
-        {0, 1, 2}
+    GLuint indices[] = {
+        0, 1, 2
     };
 
     //generate a openGl object for allocating memory on the GPU etc.
-    GLuint VBO[2], VAO[2]; //store references to objects
+    GLuint VBO, VAO; //store references to objects
 
     //don't want to repeat buffer setup code, so store in vertex array object
-    glGenVertexArrays(2, VAO);
-    glGenBuffers(2, VBO);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
     //element buffers allow you to specify a list of vertices and indices to
     //create polygons to avoid repeating the same vertex
-    GLuint EBO[2];
-    glGenBuffers(2, EBO);
+    GLuint EBO;
+    glGenBuffers(1, &EBO);
 
-    for(int i = 0; i < 2; i++)
-    {
-        //bind vertex array object
-        glBindVertexArray(VAO[i]);
+    //bind vertex array object
+    glBindVertexArray(VAO);
 
-        //set up attributes for this VAO and which VBO to use for each VAO
-        //VBO is GPU memory that contains data used to draw
+    //set up attributes for this VAO and which VBO to use for each VAO
+    //VBO is GPU memory that contains data used to draw
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO[i]);
-        //populate buffer (does not take VBO) because only one buffer type at a
-        //time
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[i]), vertices[i],
-                     GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    //populate buffer (does not take VBO) because only one buffer type at a
+    //time
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+                 GL_STATIC_DRAW);
 
-        //construct element buffer consisting of indices
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[i]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[i]), indices[i],
-                     GL_STATIC_DRAW);
+    //construct element buffer consisting of indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
 
-        //tell opengl how to interpret the vertex data
-        glVertexAttribPointer(0, //location of attribute
-                              3, //size of attribute
-                              GL_FLOAT, //type of attribute
-                              GL_FALSE, //normalize data?
-                              3 * sizeof(GLfloat), //stride (space b/w
-                                //consecutive elements of attributes array
-                              (GLvoid*)0); //offset of where attribute appears
-                              //in data
-        //enable vertex attribute with position 0
-        glEnableVertexAttribArray(0);
+    //tell opengl how to interpret the vertex data
+    glVertexAttribPointer(0, //location of attribute
+                          3, //size of attribute
+                          GL_FLOAT, //type of attribute
+                          GL_FALSE, //normalize data?
+                          3 * sizeof(GLfloat), //stride (space b/w
+                            //consecutive elements of attributes array
+                          (GLvoid*)0); //offset of where attribute appears
+                          //in data
+    //enable vertex attribute with position 0
+    glEnableVertexAttribArray(0);
 
-        //more attribute/vbo configs here. The first parameter of the vertex
-        //attribute pointer points to the attribute and which vbo to use is
-        //given by which buffer is currently bound
+    //more attribute/vbo configs here. The first parameter of the vertex
+    //attribute pointer points to the attribute and which vbo to use is
+    //given by which buffer is currently bound
 
-        //unbind vao
-        glBindVertexArray(0);
-    }
+    //unbind vao
+    glBindVertexArray(0);
 
-    GLuint shaderProgram[2];
-    shaderProgram[0] = setup_shaders(vertex_shader_source,
-                                     fragment_orange_shader_source);
-
-    shaderProgram[1] = setup_shaders(vertex_shader_source,
-                                     fragment_yellow_shader_source);
+    GLuint shaderProgram;
+    shaderProgram = setup_shaders(vertex_shader_source,
+                                     fragment_shader_source);
 
     //Wireframe mode: Replace GL_LINE with GL_FILL for default mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -202,20 +193,30 @@ int main(int argc, char **argv)
 
         //render here
         glClear(GL_COLOR_BUFFER_BIT);
-        for(int i = 0; i < 2; i++)
+        glUseProgram(shaderProgram);
+
+        //update the color of the vertex by setting a uniform (global) variable
+        GLfloat timeValue = glfwGetTime();
+        GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
+        GLint vertexColorLocation = glGetUniformLocation(shaderProgram,
+                                                         "uniform_color");
+        if(vertexColorLocation == -1)
         {
-            glUseProgram(shaderProgram[i]);
-            glBindVertexArray(VAO[i]);
-            //glDrawArrays(GL_TRIANGLES, 0, 6);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+            std::cout<<"Could not find uniform_color in shader"<<std::endl;
+            glfwSetWindowShouldClose(window, GL_TRUE);
         }
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+        glBindVertexArray(VAO);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         //double buffering ftw
         glfwSwapBuffers(window);
     }
-    glDeleteVertexArrays(2, VAO);
-    glDeleteBuffers(2, VBO);
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
     glfwTerminate();
     return 0;
 }
