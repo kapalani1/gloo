@@ -40,6 +40,30 @@ void compile_shader(GLuint shader)
     }
 }
 
+GLuint setup_shaders()
+{
+    //compile shader
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(vertexShader, 1, &vertex_shader_source, NULL);
+    glShaderSource(fragmentShader, 1, &fragment_shader_source, NULL);
+    compile_shader(vertexShader);
+    compile_shader(fragmentShader);
+
+    //link all shaders together
+    GLuint shaderProgram;
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    //no longer need individual shaders
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return shaderProgram;
+}
+
 int main(int argc, char **argv)
 {
     //initialization stuff
@@ -85,15 +109,26 @@ int main(int argc, char **argv)
     GLfloat vertices[] = {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
+        0.5f, 0.5f, 0.0f,
+        -0.5f, 0.5f, 0.0f
+    };
+
+    GLuint indices[] = {
+        0, 1, 2,
+        0, 2, 3
     };
 
     //generate a openGl object for allocating memory on the GPU etc.
-    GLuint VBO, vertexShader, fragmentShader; //store references to objects
-    GLuint VAO; //vertex array object
+    GLuint VBO, VAO; //store references to objects
+
     //don't want to repeat buffer setup code, so store in vertex array object
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+
+    //element buffers allow you to specify a list of vertices and indices to
+    //create polygons to avoid repeating the same vertex
+    GLuint EBO;
+    glGenBuffers(1, &EBO);
 
     //bind vertex array object
     glBindVertexArray(VAO);
@@ -105,6 +140,12 @@ int main(int argc, char **argv)
     //populate buffer (does not take VBO) because only one buffer type at a
     //time
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    //construct element buffer consisting of indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
+
     //tell opengl how to interpret the vertex data
     glVertexAttribPointer(0, //location of attribute
                           3, //size of attribute
@@ -124,24 +165,10 @@ int main(int argc, char **argv)
     //unbind vao
     glBindVertexArray(0);
 
-    //compile shader
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(vertexShader, 1, &vertex_shader_source, NULL);
-    glShaderSource(fragmentShader, 1, &fragment_shader_source, NULL);
-    compile_shader(vertexShader);
-    compile_shader(fragmentShader);
+    GLuint shaderProgram = setup_shaders();
 
-    //link all shaders together
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    //no longer need individual shaders
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    //Wireframe mode: Replace GL_LINE with GL_FILL for default mode
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
     //game loop that runs forever
@@ -150,13 +177,13 @@ int main(int argc, char **argv)
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
         //check for keyboard/mouse events
         glfwPollEvents();
 
         //render here
-
 
         //double buffering ftw
         glfwSwapBuffers(window);
