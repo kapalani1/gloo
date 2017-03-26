@@ -14,20 +14,21 @@ const char *vertex_shader_source =
 "#version 330 core\n"
 //location metadata about the position of the attribute
 "layout (location = 0) in vec3 position;\n" //position attribute location is 0
-"out vec4 vertexColor;\n"
+"layout (location = 1) in vec3 color;\n"
+"out vec3 vertexColor;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
-"   vertexColor = vec4(0.0f, 0.5f, 0.0f, 1.0f);\n"
+"   vertexColor = color;\n"
 "}\n";
 
 const char *fragment_shader_source =
 "#version 330 core\n"
+"in vec3 vertexColor;\n"
 "out vec4 color;\n"
-"uniform vec4 uniform_color;\n" //a uniform variable is global
 "void main()\n"
 "{\n"
-"   color = uniform_color;\n"
+"   color = vec4(vertexColor, 1.0f);\n"
 "}\n";
 
 const char *fragment_yellow_shader_source =
@@ -121,9 +122,10 @@ int main(int argc, char **argv)
 
     //vertices for triangle to be rendered
     GLfloat vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.5f, 0.5f, 0.0f
+        //positions             //colors
+        -0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.0f,      0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f,       0.0f, 0.0f, 1.0f
     };
 
     GLuint indices[] = {
@@ -150,7 +152,7 @@ int main(int argc, char **argv)
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     //populate buffer (does not take VBO) because only one buffer type at a
-    //time
+    //time. copy data into gpu
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
                  GL_STATIC_DRAW);
 
@@ -164,12 +166,16 @@ int main(int argc, char **argv)
                           3, //size of attribute
                           GL_FLOAT, //type of attribute
                           GL_FALSE, //normalize data?
-                          3 * sizeof(GLfloat), //stride (space b/w
+                          6 * sizeof(GLfloat), //stride (space b/w
                             //consecutive elements of attributes array
                           (GLvoid*)0); //offset of where attribute appears
                           //in data
     //enable vertex attribute with position 0
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
+                          (GLvoid*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 
     //more attribute/vbo configs here. The first parameter of the vertex
     //attribute pointer points to the attribute and which vbo to use is
@@ -194,18 +200,6 @@ int main(int argc, char **argv)
         //render here
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shaderProgram);
-
-        //update the color of the vertex by setting a uniform (global) variable
-        GLfloat timeValue = glfwGetTime();
-        GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
-        GLint vertexColorLocation = glGetUniformLocation(shaderProgram,
-                                                         "uniform_color");
-        if(vertexColorLocation == -1)
-        {
-            std::cout<<"Could not find uniform_color in shader"<<std::endl;
-            glfwSetWindowShouldClose(window, GL_TRUE);
-        }
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
         glBindVertexArray(VAO);
         //glDrawArrays(GL_TRIANGLES, 0, 6);
