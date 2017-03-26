@@ -7,5 +7,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing")
 find_package (OpenGL REQUIRED)
 find_package (GLEW REQUIRED)
 find_package (glfw3 3.2 REQUIRED)
+include_directories(include)
 add_subdirectory(src)
 

@@ -2,81 +2,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
+#include "shader.h"
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mode)
 {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
-}
-
-const char *vertex_shader_source =
-"#version 330 core\n"
-//location metadata about the position of the attribute
-"layout (location = 0) in vec3 position;\n" //position attribute location is 0
-"layout (location = 1) in vec3 color;\n"
-"out vec3 vertexColor;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
-"   vertexColor = color;\n"
-"}\n";
-
-const char *fragment_shader_source =
-"#version 330 core\n"
-"in vec3 vertexColor;\n"
-"out vec4 color;\n"
-"void main()\n"
-"{\n"
-"   color = vec4(vertexColor, 1.0f);\n"
-"}\n";
-
-const char *fragment_yellow_shader_source =
-"#version 330 core\n"
-"out vec4 color;\n"
-"void main()\n"
-"{\n"
-"   color = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
-"}\n";
-
-void compile_shader(GLuint shader)
-{
-    glCompileShader(shader);
-
-    //check if compilation successful
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "Could not compile shader \n"<<infoLog << std::endl;
-    }
-}
-
-GLuint setup_shaders(const char *vertex_shader_source,
-                     const char *fragment_shader_source)
-{
-    //compile shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(vertexShader, 1, &vertex_shader_source, NULL);
-    glShaderSource(fragmentShader, 1, &fragment_shader_source, NULL);
-    compile_shader(vertexShader);
-    compile_shader(fragmentShader);
-
-    //link all shaders together
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    //no longer need individual shaders
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return shaderProgram;
 }
 
 int main(int argc, char **argv)
@@ -123,9 +55,9 @@ int main(int argc, char **argv)
     //vertices for triangle to be rendered
     GLfloat vertices[] = {
         //positions             //colors
-        -0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.0f,      0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.0f,       0.0f, 0.0f, 1.0f
+        -1.0f, -1.0f, 0.0f,     1.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,      0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,       0.0f, 0.0f, 1.0f
     };
 
     GLuint indices[] = {
@@ -184,9 +116,7 @@ int main(int argc, char **argv)
     //unbind vao
     glBindVertexArray(0);
 
-    GLuint shaderProgram;
-    shaderProgram = setup_shaders(vertex_shader_source,
-                                     fragment_shader_source);
+    Shader shader = Shader("../src/shaders/shader2.vs", "../src/shaders/shader2.frag");
 
     //Wireframe mode: Replace GL_LINE with GL_FILL for default mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -199,7 +129,7 @@ int main(int argc, char **argv)
 
         //render here
         glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(shaderProgram);
+        shader.use();
 
         glBindVertexArray(VAO);
         //glDrawArrays(GL_TRIANGLES, 0, 6);
