@@ -52,5 +52,5 @@ add_subdirectory(deps)
 include_directories(include)
 
 #build project
-#add_subdirectory(src)
-#set(CMAKE_INSTALL_PREFIX "${gloo_SOURCE_DIR}/")
+add_subdirectory(src)
+set(CMAKE_INSTALL_PREFIX "${gloo_SOURCE_DIR}/")
