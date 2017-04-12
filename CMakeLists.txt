@@ -9,6 +9,8 @@ if(APPLE)
         set(CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -funroll-loops")
         set(CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -Wno-narrowing")
         set(CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -Wno-deprecated-register")
+        set(CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -Wno-deprecated-declarations")
+        set(CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS}  -Wno-c++11-extensions")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CLANG_CXX_FLAGS}")
     endif()
 
