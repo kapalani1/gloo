@@ -39,7 +39,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    GLFWwindow *window = glfwCreateWindow(DEFAULT_W, DEFAULT_H, "gloo", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(DEFAULT_W, DEFAULT_H, "gloo", 
+                                          NULL, NULL);
     if(!window)
     {
         std::cout<<"Error: could not create window!"<<std::endl;
@@ -61,6 +62,7 @@ int main(int argc, char **argv)
         glfwTerminate();
         exit(1);
     }
+    std::cout<<glewGetString(GLEW_VERSION)<<" "<<glfwGetVersionString()<<std::endl;
 
     while(!glfwWindowShouldClose(window))
     {
