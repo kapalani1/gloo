@@ -1,73 +1,53 @@
 #include <iostream>
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 #include <math.h>
 
 #define DEFAULT_W 960
 #define DEFAULT_H 640
 
-void render()
+void renderScene()
 {
-    glBegin(GL_TRIANGLES);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor3f(0.1, 0.2, 0.3);
+
+    glBegin(GL_TRIANGLES);
     glVertex3f(0.0, 0.5, 0.0);
     glVertex3f(-0.5, -0.5, 0.0);
     glVertex3f(0.5, -0.5, 0.0);
     glEnd();
-}
 
-void update(GLFWwindow *window)
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    render();
-    glfwSwapBuffers(window);
-    glfwPollEvents();
-}
-
-void err_callback(int error, const char *description)
-{
-    std::cout<<"GLFW Error: " <<description<<std::endl;
+    glutSwapBuffers();
 }
 
 int main(int argc, char **argv)
 {
-    //initialization stuff
-    glfwSetErrorCallback(err_callback);
-    if(!glfwInit())
-    {
-        std::cout<<"Error: could not initialize GLFW!"<<std::endl;
-        exit(1);
-    }
 
-    GLFWwindow *window = glfwCreateWindow(DEFAULT_W, DEFAULT_H, "gloo", 
-                                          NULL, NULL);
-    if(!window)
-    {
-        std::cout<<"Error: could not create window!"<<std::endl;
-        glfwTerminate();
-        exit(1);
-    }
+    //initialize GLUT and create window
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowSize(DEFAULT_W, DEFAULT_H);
+    glutCreateWindow("gloo");
 
-    //set context
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-
-    //framebuffer event callbacks
-    //TODO: FIXME
-
-    //initialize glew
+    //glew init
     if(glewInit() != GLEW_OK)
     {
         std::cout<<"Error: could not initialize GLEW!"<<std::endl;
-        glfwTerminate();
         exit(1);
     }
-    std::cout<<glewGetString(GLEW_VERSION)<<" "<<glfwGetVersionString()<<std::endl;
+    std::cout<<" Glew version: " << glewGetString(GLEW_VERSION) <<
+               " GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << 
+               " OpenGL version: " <<glGetString(GL_VERSION) << std::endl;
 
-    while(!glfwWindowShouldClose(window))
-    {
-        update(window);
-    }
+    //register GLUT callbacks
+    glutDisplayFunc(renderScene);
+
+    //enter GLUT event processing cycle
+    glutMainLoop();
 
     return 0;
 }

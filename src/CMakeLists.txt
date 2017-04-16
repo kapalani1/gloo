@@ -7,7 +7,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 add_executable(gloo ${SOURCES})
 target_link_libraries(gloo 
                       ${GLEW_LIBRARIES} 
-                      ${GLFW_LIBRARIES} 
+                      ${GLUT_LIBRARIES} 
                       ${OPENGL_LIBRARIES} 
                       ${FREETYPE_LIBRARIES} 
                       ${CMAKE_THREADS_INIT})

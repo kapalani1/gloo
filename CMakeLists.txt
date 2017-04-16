@@ -45,12 +45,10 @@ if(LINUX)
     endif()
 endif(LINUX)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-
 find_package(OpenGL REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(GLFW REQUIRED)
+find_package(GLUT REQUIRED)
 
 add_subdirectory(src)
